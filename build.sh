@@ -7,7 +7,7 @@ set -euo pipefail
 
 RELEASE_VER='8'
 ARCH="$(uname -m)"
-OUTPUT_DIR='./result_${ARCH}'
+OUTPUT_DIR="./result_${ARCH}"
 TYPE='default'
 
 OPTIND=1
