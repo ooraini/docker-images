@@ -64,14 +64,14 @@ if [[ -d "${OUTPUT_DIR}" ]]; then
 fi
 
 
-IMAGE_NAME="almalinux-${RELEASE_VER}-docker.${TYPE}.tar.xz"
-KS_PATH="./kickstarts/almalinux-${RELEASE_VER}-${TYPE}.ks"
+IMAGE_NAME="rockylinux-${RELEASE_VER}-docker.${TYPE}.tar.xz"
+KS_PATH="./kickstarts/rockylinux-${RELEASE_VER}-${TYPE}.ks"
 DOCKER_FILE=${OUTPUT_DIR}/Dockerfile
 
 
 livemedia-creator --no-virt --make-tar --ks "${KS_PATH}" \
                   --image-name="${IMAGE_NAME}" \
-                  --project "AlmaLinux OS ${RELEASE_VER}-${TYPE} Docker" \
+                  --project "Rocky Linux ${RELEASE_VER}-${TYPE} Docker" \
                   --releasever "${RELEASE_VER}" \
                   --resultdir "${OUTPUT_DIR}" \
                   --anaconda-arg "--nosave all"
