@@ -1,5 +1,5 @@
 #!/bin/bash
-# description: AlmaLinux base Docker image rootfs and Dockerfile generation
+# description: Rocky Linux base Docker image rootfs and Dockerfile generation
 #              script.
 # license: MIT.
 
@@ -14,7 +14,7 @@ OPTIND=1
 
 
 show_usage() {
-    echo -e 'Generates an AlmaLinux OS rootfs and Dockerfile\n'
+    echo -e 'Generates an Rocky Linux OS rootfs and Dockerfile\n'
     echo -e 'Usage: build.sh [OPTION]...\n'
     echo '  -h        show this message and exit'
     echo '  -o        output directory path. Default is "./result"'
