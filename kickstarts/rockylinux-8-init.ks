@@ -1,7 +1,8 @@
-# AlmaLinux 8 kickstart file for x86_64 base Docker image
+# Rocky Linux 8 kickstart file for x86_64 base Docker image
 
 # install
-url --url https://repo.almalinux.org/almalinux/8/BaseOS/$basearch/os/
+url --url https://download.rockylinux.org/$contentdir/$releasever/BaseOS/$basearch/os/
+repo --name=appstream --baseurl=https://dl.rockylinux.org/$contentdir/$releasever/AppStream/$basearch/os/
 
 lang en_US.UTF-8
 keyboard us
@@ -15,12 +16,12 @@ zerombr
 clearpart --all --initlabel
 autopart --fstype=ext4 --type=plain --nohome --noboot --noswap
 
-rootpw --iscrypted --lock almalinux
+rootpw --iscrypted --lock rockylinux
 
 shutdown
 
 %packages --excludedocs --nocore --instLangs=en --excludeWeakdeps
-almalinux-release
+rocky-release
 bash
 coreutils-single
 crypto-policies-scripts
@@ -65,8 +66,8 @@ yum
 # set DNF infra variable to container for compatibility with CentOS
 echo 'container' > /etc/dnf/vars/infra
 
-# import AlmaLinux PGP key
-rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+# import Rocky Linux PGP key
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
 
 # install only en_US.UTF-8 locale files, see
 # https://fedoraproject.org/wiki/Changes/Glibc_locale_subpackaging for details
