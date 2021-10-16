@@ -1,0 +1,122 @@
+- hosts: all
+  become: yes
+  vars_prompt:
+    - name: password
+      prompt: Registry user({{ registry_user }}) password?
+  vars:
+    clean_start: false
+    git_repo: https://github.com/ooraini/docker-images
+    build_dir: /root/docker-images
+    arch: x86_64
+    registry_url: docker.io
+    registry_org: omaraloraini
+    registry_user: omaraloraini
+    image_name_prefix: 'rockylinux-'
+    image_variants:
+      - minimal
+      - base
+      - init
+      - micro      
+    image_tags:
+      - 8
+      - 8.4
+    enalbe_image_push: yes
+
+  tasks:
+    - name: Ensure deps
+      yum:
+        name:
+          - git
+          - anaconda-tui 
+          - lorax 
+          - subscription-manager
+          - jq 
+          - buildah
+
+    - name: Ensure pexpect 
+      pip: 
+        name: pexpect
+
+    - name: Enalbe and start rhsm.service
+      systemd:
+        name: rhsm.service
+        state: started
+        enabled: yes
+        
+    - name: OS update
+      yum: "name=* state=latest"
+
+    - name: check to see if we need a reboot
+      command: needs-restarting -r
+      register: result
+      ignore_errors: yes
+
+    - name: display result
+      debug:
+        var: result.rc
+
+    - name: Reboot Server if Necessary
+      command: shutdown -r now "Ansible Updates Triggered"
+      become: true
+      async: 30
+      poll: 0
+      when: result.rc == 1
+
+    # This pause is mandatory, otherwise the existing control connection
+    # gets reused!
+    # (https://gist.github.com/infernix/a968f23c4f4e1d6723e4)
+    - name: Pausing to allow server to shutdown and terminate our SSH connection
+      pause: seconds=30
+      when: result.rc == 1
+
+    - name: Wait for reboot to complete and SSH to become available
+      local_action: wait_for host={{ inventory_hostname }} port=22
+        state=started delay=30 timeout=600
+      retries: 30
+      delay: 10
+      when: result.rc == 1
+
+    - name: Clear {{ build_dir }}
+      file:
+        path: "{{ build_dir }}"
+        state: absent
+      when: clean_start
+        
+    - name: Clone Git repo
+      git:
+        repo: "{{ git_repo }}"
+        dest: "{{ build_dir }}"
+
+    - name: Create rootfs archives
+      shell: 
+        cmd: ./build.sh -o {{ item }} -t {{ item }}
+        chdir: "{{ build_dir }}"
+        creates: "{{ build_dir }}/{{ item }}_{{ arch }}/rockylinux-8-docker.{{ item }}.tar.xz"
+      loop: "{{ image_variants }}"
+    
+    - name: Create images
+      shell:
+        cmd: buildah bud -t {{ registry_url }}/{{ registry_org }}/{{ image_name_prefix }}8-{{ item }}:latest -f ./Dockerfile .
+        chdir: "{{ build_dir }}/{{ item }}_{{ arch }}"
+      loop: "{{ image_variants }}"
+
+    - name: tag images with {{ image_tags | join(' ') }}
+      vars:
+        image: "{{ registry_url }}/{{ registry_org }}/{{ image_name_prefix }}8-{{ item }}"
+      shell:
+        cmd: buildah tag {{ image }}:latest {{ [image] | product(image_tags) | map('join', ':') | join(' ') }}
+        chdir: "{{ build_dir }}/{{ item }}_{{ arch }}"
+      loop: "{{ image_variants }}"
+    
+    - name: Login to {{ registry_url }}
+      expect:
+        command: buildah login -u {{ registry_user }} {{ registry_url }}
+        responses:
+          (?i)password: "{{ password }}"
+      no_log: true   
+      when: enalbe_image_push
+
+    - name: Push images
+      shell: buildah push {{ registry_url }}/{{ registry_org }}/{{ image_name_prefix }}8-{{ item.0 }}:{{ item.1 }}
+      loop: "{{ image_variants | product(['latest'] + image_tags) }}"
+  
