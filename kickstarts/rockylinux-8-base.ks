@@ -1,7 +1,7 @@
 # Rocky Linux 8 kickstart file for x86_64 base Docker image
 
 # install
-url --url https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/
+url --url https://download.rockylinux.org/$contentdir/$releasever/BaseOS/$basearch/os/
 repo --name=appstream --baseurl=https://dl.rockylinux.org/$contentdir/$releasever/AppStream/$basearch/os/
 
 lang en_US.UTF-8
