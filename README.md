@@ -33,7 +33,10 @@ image_tags:
 enalbe_image_push: yes # Will attempt to push images to the registry
 ```
 
-### Command
+### Commands
+
+`vagrant up`
+
 `ansible-playbook -i 192.168.33.10, playbook.yml -u vagrant`
 
 ## References
