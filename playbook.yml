@@ -1,5 +1,4 @@
 - hosts: all
-  become: yes
   vars_prompt:
     - name: password
       prompt: Registry user({{ registry_user }}) password?
@@ -24,6 +23,7 @@
 
   tasks:
     - name: Ensure deps
+      become: yes
       yum:
         name:
           - git
@@ -33,20 +33,24 @@
           - jq 
           - buildah
 
-    - name: Ensure pexpect 
+    - name: Ensure pexpect
+      become: yes
       pip: 
         name: pexpect
 
     - name: Enalbe and start rhsm.service
+      become: yes
       systemd:
         name: rhsm.service
         state: started
         enabled: yes
         
     - name: OS update
+      become: yes
       yum: "name=* state=latest"
 
     - name: check to see if we need a reboot
+      become: yes
       command: needs-restarting -r
       register: result
       ignore_errors: yes
@@ -56,8 +60,8 @@
         var: result.rc
 
     - name: Reboot Server if Necessary
+      become: yes
       command: shutdown -r now "Ansible Updates Triggered"
-      become: true
       async: 30
       poll: 0
       when: result.rc == 1
@@ -70,24 +74,26 @@
       when: result.rc == 1
 
     - name: Wait for reboot to complete and SSH to become available
-      local_action: wait_for host={{ inventory_hostname }} port=22
-        state=started delay=30 timeout=600
+      local_action: wait_for host={{ inventory_hostname }} port=22 state=started delay=30 timeout=600
       retries: 30
       delay: 10
       when: result.rc == 1
 
     - name: Clear {{ build_dir }}
+      become: yes
       file:
         path: "{{ build_dir }}"
         state: absent
       when: clean_start
         
     - name: Clone Git repo
+      become: yes
       git:
         repo: "{{ git_repo }}"
         dest: "{{ build_dir }}"
 
     - name: Create rootfs archives
+      become: yes
       shell: 
         cmd: ./build.sh -o {{ item }} -t {{ item }}
         chdir: "{{ build_dir }}"
@@ -95,12 +101,14 @@
       loop: "{{ image_variants }}"
     
     - name: Create images
+      become: yes
       shell:
         cmd: buildah bud -t {{ registry_url }}/{{ registry_org }}/{{ image_name_prefix }}8-{{ item }}:latest -f ./Dockerfile .
         chdir: "{{ build_dir }}/{{ item }}_{{ arch }}"
       loop: "{{ image_variants }}"
 
     - name: tag images with {{ image_tags | join(' ') }}
+      become: yes
       vars:
         image: "{{ registry_url }}/{{ registry_org }}/{{ image_name_prefix }}8-{{ item }}"
       shell:
@@ -109,6 +117,7 @@
       loop: "{{ image_variants }}"
     
     - name: Login to {{ registry_url }}
+      become: yes
       expect:
         command: buildah login -u {{ registry_user }} {{ registry_url }}
         responses:
@@ -117,6 +126,7 @@
       when: enalbe_image_push
 
     - name: Push images
+      become: yes
       shell: buildah push {{ registry_url }}/{{ registry_org }}/{{ image_name_prefix }}8-{{ item.0 }}:{{ item.1 }}
       loop: "{{ image_variants | product(['latest'] + image_tags) }}"
   
