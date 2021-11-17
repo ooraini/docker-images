@@ -29,7 +29,7 @@ image_variants:
   - micro      
 image_tags:
   - 8
-  - 8.4
+  - 8.5
 enalbe_image_push: yes # Will attempt to push images to the registry
 ```
 
