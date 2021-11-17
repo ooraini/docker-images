@@ -19,7 +19,7 @@
     image_tags:
       - 8
       - 8.5
-    enalbe_image_push: yes
+    enable_image_push: yes
 
   tasks:
     - name: Ensure deps
@@ -123,10 +123,11 @@
         responses:
           (?i)password: "{{ password }}"
       no_log: true   
-      when: enalbe_image_push
+      when: enable_image_push | bool
 
     - name: Push images
       become: yes
       shell: buildah push {{ registry_url }}/{{ registry_org }}/{{ image_name_prefix }}8-{{ item.0 }}:{{ item.1 }}
       loop: "{{ image_variants | product(['latest'] + image_tags) }}"
+      when: enable_image_push | bool
   

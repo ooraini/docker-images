@@ -30,7 +30,7 @@ image_variants:
 image_tags:
   - 8
   - 8.5
-enalbe_image_push: yes # Will attempt to push images to the registry
+enable_image_push: yes # Will attempt to push images to the registry
 ```
 
 ### Commands
